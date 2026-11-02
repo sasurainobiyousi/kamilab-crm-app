@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>KAMI Lab CRM</title>
+  <meta name="theme-color" content="#f5f0eb">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <style>
+    :root { --bg: #f5f0eb; --ink: #26221e; --muted: #8a8278; --gold: #c9a96e; }
+    html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); }
+    #app { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: var(--bg); }
+    #splash {
+      position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 18px; background: var(--bg); transition: opacity .3s; padding: 16px; text-align: center;
+    }
+    #splash.gone { opacity: 0; pointer-events: none; }
+    #splash img { width: 96px; height: 96px; border-radius: 22px; }
+    .spin { width: 28px; height: 28px; border: 3px solid #e4dcd2; border-top-color: var(--gold); border-radius: 50%; animation: s 0.9s linear infinite; }
+    @keyframes s { to { transform: rotate(360deg); } }
+    #help { display: none; font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 320px; }
+    #help a { display: inline-block; margin-top: 10px; padding: 10px 18px; border-radius: 10px; background: var(--ink); color: #fff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div id="splash">
+    <img src="icon-192.png" alt="">
+    <div class="spin"></div>
+    <div id="help">
+      開かないときは、Chrome で <b>salon.kamilab</b> にログインしているか確かめてください。<br>
+      Not opening? Check Chrome is signed in to salon.kamilab.<br>
+      <a id="direct" target="_blank" rel="noopener">ブラウザで開く / Open in browser</a>
+    </div>
+  </div>
+  <iframe id="app" title="KAMI Lab CRM" allow="clipboard-write; clipboard-read"></iframe>
+
+  <script>
+    // The CRM web app (Apps Script, "only myself"). Same URL as before — it never changes.
+    var CRM_URL = 'https://script.google.com/macros/s/AKfycbwI2n-yoDGB8PVsMWsrDoOvL2ugbP77SnsRnK_5ji3VCK0N1KdwLgDZ4RvvZcwxgsfw/exec';
+
+    var frame = document.getElementById('app');
+    var splash = document.getElementById('splash');
+    document.getElementById('direct').href = CRM_URL;
+
+    // Pass on ?demo=on etc. from the shell's own URL (e.g. .../?demo=on)
+    frame.src = CRM_URL + location.search;
+
+    var helpTimer = setTimeout(function () { document.getElementById('help').style.display = 'block'; }, 10000);
+    frame.addEventListener('load', function () {
+      clearTimeout(helpTimer);
+      splash.classList.add('gone');
+    });
+
+    // After a long time in the background (6 h+), reload so Google's session is fresh.
+    // Short breaks (switching to Hnry, a call) never reload — a checkout in progress stays.
+    var hiddenAt = 0;
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) { hiddenAt = Date.now(); return; }
+      if (hiddenAt && Date.now() - hiddenAt > 6 * 60 * 60 * 1000) location.reload();
+    });
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+  </script>
+</body>
+</html>
